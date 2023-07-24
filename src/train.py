@@ -118,17 +118,11 @@ def train_model(model, args, train_dataloader, valid_dataloader, train_length):
                                 print(traceback.print_exc())
                 else:
                     pass
-                #print('EVAL F1:', eval_f1, ' ', 'BEST F1', best_eval_f1)
+
 
         # Calculate the average loss over the training data.
         avg_train_loss = batch_loss / len(train_dataloader)
-
-          
         train_loss_set.append(avg_train_loss)
-        # print(F'\n\tAverage Training loss: {avg_train_loss}')
-          
-
-            
 
     return train_loss_set, best_eval_f1
 

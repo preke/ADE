@@ -82,13 +82,13 @@ args.lr = 1e-5
 
 
 
-epoch_list = [1]
+epoch_list = [10]
 cnt = 0
 seeds = [42]#[321, 42, 1024, 0, 1, 13, 41, 123, 456, 999] #
 
 
 personalities = ['A', 'C', 'E', 'O', 'N']
-args.batch_size = 32
+args.batch_size = 64
 args.MAX_NUM_UTTR  = 20
 
 
@@ -126,10 +126,6 @@ with open(args.result_name, 'w') as f:
                 from the speakers for personality prediction through the classification head.
                 '''
                 model = RobertaForSequenceClassification.from_pretrained('roberta-base', num_labels=args.num_class).cuda(args.device)
-                # model = TensorParallelPreTrainedModel(model, cuda_list)
-
-
-
 
             starttime = datetime.datetime.now()
             training_loss, best_eval_acc = train_model(model, args, train_dataloader, valid_dataloader, train_length)
@@ -149,7 +145,7 @@ with open(args.result_name, 'w') as f:
 
 
             print('Load model from', args.model_path)
-            # model = TensorParallelPreTrainedModel(model, cuda_list)
+
 
             starttime = datetime.datetime.now()
             args.print_eval = True
