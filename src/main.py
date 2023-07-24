@@ -14,10 +14,14 @@ from transformers import RobertaConfig, RobertaModel, RobertaTokenizer, RobertaF
 import time
 from transformers import LlamaForSequenceClassification, LlamaTokenizer
 from tensor_parallel import TensorParallelPreTrainedModel
+from torch.utils.data.distributed import DistributedSampler
 # CONFIG
+
+
 
 parser = argparse.ArgumentParser(description='')
 args   = parser.parse_args()
+
 
 args.device        = 1
 args.MAX_LEN       = 256
@@ -44,7 +48,7 @@ args.mode         = 'Full_dialog'
 
 args.VAD_tokenized_dict = '../VAD_tokenized_dict.json'
 
-args.data = 'Friends_Persona'
+args.data = 'CPED'
 hade_mode = 'Full'
 
 
@@ -67,16 +71,8 @@ args.VAD_dict = VAD_dict
 
 
 
-
-model_dict = {
-    'RoBERTa' : 'roberta-base',
-    'Llama'   : 'huggyllama/llama-7b'
-}
-
-
 args.BASE         = 'RoBERTa'
 tokenizer = RobertaTokenizer.from_pretrained("roberta-base", do_lower_case=True)
-cuda_list = ["cuda:1", "cuda:2", "cuda:3"]
 
 args.lr = 1e-5
 
