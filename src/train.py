@@ -193,8 +193,8 @@ def eval_model(model, args, valid_dataloader):
                 
         nb_eval_steps += 1
     if args.print_eval == True:
-        print(pred_list)
-        print(labels_list)
+        print('Predict:',pred_list)
+        print('Labels:',labels_list)
     return accuracy_score(labels_list, pred_list), f1_score(labels_list, pred_list)
 
 

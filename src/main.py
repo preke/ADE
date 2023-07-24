@@ -43,13 +43,9 @@ HADE-> HADE
 
 
 args.mode         = 'Uttr'
-# args.mode         = 'Full_dialog'
-# args.mode         = 'Context_Hierarchical_affective'
-# args.BASE         = 'llama'
+
 args.VAD_tokenized_dict = '../VAD_tokenized_dict.json'
 
-# args.data = 'Friends_Persona'
-# args.data = 'CPED'
 args.data = 'Friends_Persona'
 hade_mode = 'Full'
 
@@ -75,7 +71,7 @@ args.VAD_dict = VAD_dict
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 args.BASE         = 'RoBERTa'
-tokenizer = RobertaTokenizer.from_pretrained("roberta-large", do_lower_case=True)
+tokenizer = RobertaTokenizer.from_pretrained("roberta-base", do_lower_case=True)
 
 
 epoch_list = [3]
@@ -127,7 +123,7 @@ with open(args.result_name, 'w') as f:
                 We use the pre-trained models to encode the utterance 
                 from the speakers for personality prediction through the classification head.
                 '''
-                model = RobertaForSequenceClassification.from_pretrained('roberta-large', \
+                model = RobertaForSequenceClassification.from_pretrained('roberta-base', \
                                 num_labels=args.num_class).cuda(args.device)
         
             elif args.mode == 'Context' :
@@ -137,11 +133,11 @@ with open(args.result_name, 'w') as f:
                 by segment embeddings in the pre-trained models: 1 for utterances and 0 for dialog context. 
                 '''
 
-                model = RobertaForSequenceClassification.from_pretrained('roberta-large', \
+                model = RobertaForSequenceClassification.from_pretrained('roberta-base', \
                                 num_labels=args.num_class).cuda(args.device)
 
             elif args.mode == 'HADE':
-                model     = HADE.from_pretrained('roberta-large', args=args).cuda(args.device)
+                model     = HADE.from_pretrained('roberta-base', args=args).cuda(args.device)
 
             model = TensorParallelPreTrainedModel(model, ["cuda:0", "cuda:1", "cuda:2", "cuda:3"])
 
