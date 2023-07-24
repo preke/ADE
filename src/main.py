@@ -13,7 +13,7 @@ from train import train_model, eval_model
 from model import HADE
 from transformers import RobertaConfig, RobertaModel, RobertaTokenizer, RobertaForSequenceClassification
 import time
-
+from tensor_parallel import TensorParallelPreTrainedModel
 # CONFIG
 
 parser = argparse.ArgumentParser(description='')
@@ -50,7 +50,7 @@ args.VAD_tokenized_dict = '../VAD_tokenized_dict.json'
 
 # args.data = 'Friends_Persona'
 # args.data = 'CPED'
-args.data = 'PELD'
+args.data = 'Friends_Persona'
 hade_mode = 'Full'
 
 
@@ -87,7 +87,7 @@ seeds = [0]#[321, 42, 1024, 0, 1, 13, 41, 123, 456, 999] #
 
 if args.data == 'Friends_Persona' or args.data == 'CPED':
     personalities = ['A', 'C', 'E', 'O', 'N']
-    args.batch_size = 16
+    args.batch_size = 32
     args.MAX_NUM_UTTR  = 20
 else:
     personalities = ['Chandler', 'Joey','Rachel','Monica','Phoebe','Ross']
@@ -142,10 +142,8 @@ with open(args.result_name, 'w') as f:
 
             elif args.mode == 'HADE':
                 model     = HADE.from_pretrained('roberta-large', args=args).cuda(args.device)
-                
 
-
-
+            model = TensorParallelPreTrainedModel(model, ["cuda:0", "cuda:1", "cuda:2", "cuda:3"])
 
             print('Training Length is:', len(train_dataloader))
             starttime = datetime.datetime.now()
