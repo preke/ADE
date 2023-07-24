@@ -42,16 +42,15 @@ HADE-> HADE
 '''
 
 
-args.mode         = 'HADE'
+args.mode         = 'Uttr'
 # args.mode         = 'Full_dialog'
 # args.mode         = 'Context_Hierarchical_affective'
-args.BASE         = 'RoBERTa'
 # args.BASE         = 'llama'
 args.VAD_tokenized_dict = '../VAD_tokenized_dict.json'
 
 # args.data = 'Friends_Persona'
-args.data = 'CPED'
-# args.data = 'PELD'
+# args.data = 'CPED'
+args.data = 'PELD'
 hade_mode = 'Full'
 
 
@@ -75,8 +74,10 @@ args.VAD_dict = VAD_dict
 
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
-
+args.BASE         = 'RoBERTa'
 tokenizer = RobertaTokenizer.from_pretrained("roberta-large", do_lower_case=True)
+
+
 epoch_list = [3]
 args.lr = 1e-4
 
@@ -142,6 +143,9 @@ with open(args.result_name, 'w') as f:
             elif args.mode == 'HADE':
                 model     = HADE.from_pretrained('roberta-large', args=args).cuda(args.device)
                 
+
+
+
 
             print('Training Length is:', len(train_dataloader))
             starttime = datetime.datetime.now()
