@@ -6,7 +6,6 @@ import argparse
 import os
 import datetime
 import traceback
-from transformers import BertTokenizer, BertConfig, BertForSequenceClassification
 
 from data_loader import load_data
 from train import train_model, eval_model
@@ -31,7 +30,6 @@ args.d_transformer = 128
 args.print_eval = False
 
 '''
-
 Mode:
 
 Uttr --> S 
@@ -75,7 +73,7 @@ tokenizer = RobertaTokenizer.from_pretrained("roberta-base", do_lower_case=True)
 
 
 epoch_list = [3]
-args.lr = 1e-4
+args.lr = 2e-4
 
 cnt = 0
 
