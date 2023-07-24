@@ -12,13 +12,14 @@ from train import train_model, eval_model
 from model import HADE
 from transformers import RobertaConfig, RobertaModel, RobertaTokenizer, RobertaForSequenceClassification
 import time
+from transformers import LlamaForSequenceClassification, LlamaTokenizer
 from tensor_parallel import TensorParallelPreTrainedModel
 # CONFIG
 
 parser = argparse.ArgumentParser(description='')
 args   = parser.parse_args()
 
-args.device        = 0
+args.device        = 1
 args.MAX_LEN       = 256
 args.adam_epsilon  = 1e-6
 args.num_class     = 2
@@ -31,7 +32,6 @@ args.print_eval = False
 
 '''
 Mode:
-
 Uttr --> S 
 Context --> S + C
 Full_dialog --> F
@@ -40,7 +40,7 @@ HADE-> HADE
 '''
 
 
-args.mode         = 'Uttr'
+args.mode         = 'Full_dialog'
 
 args.VAD_tokenized_dict = '../VAD_tokenized_dict.json'
 
@@ -51,7 +51,7 @@ hade_mode = 'Full'
 # args.result_name  = args.data + '_' + args.mode + '_large.txt' 
 
 dialog_flow_len = '1' # '0.5', '0.75'
-args.result_name  = args.data + '_' + args.mode + '_large_'+hade_mode+'_'+dialog_flow_len+'.txt' 
+args.result_name  = args.data + '_' + args.mode + '_base_'+hade_mode+'_'+dialog_flow_len+'.txt'
 
 
 
@@ -66,27 +66,31 @@ for r in VAD_Lexicons.iterrows():
 args.VAD_dict = VAD_dict
 
 
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
+
+
+model_dict = {
+    'RoBERTa' : 'roberta-base',
+    'Llama'   : 'huggyllama/llama-7b'
+}
+
 
 args.BASE         = 'RoBERTa'
 tokenizer = RobertaTokenizer.from_pretrained("roberta-base", do_lower_case=True)
+cuda_list = ["cuda:1", "cuda:2", "cuda:3"]
+
+args.lr = 1e-5
 
 
-epoch_list = [3]
-args.lr = 2e-4
 
+epoch_list = [1]
 cnt = 0
+seeds = [42]#[321, 42, 1024, 0, 1, 13, 41, 123, 456, 999] #
 
-seeds = [0]#[321, 42, 1024, 0, 1, 13, 41, 123, 456, 999] # 
 
-if args.data == 'Friends_Persona' or args.data == 'CPED':
-    personalities = ['A', 'C', 'E', 'O', 'N']
-    args.batch_size = 32
-    args.MAX_NUM_UTTR  = 20
-else:
-    personalities = ['Chandler', 'Joey','Rachel','Monica','Phoebe','Ross']
-    args.batch_size    = 64
-    args.MAX_NUM_UTTR  = 10
+personalities = ['A', 'C', 'E', 'O', 'N']
+args.batch_size = 32
+args.MAX_NUM_UTTR  = 20
+
 
 with open(args.result_name, 'w') as f:
     test_acc_total = []
@@ -94,15 +98,15 @@ with open(args.result_name, 'w') as f:
     for personality in personalities:
         args.epochs = epoch_list[0]
         cnt += 1
+
         if args.data == 'Friends_Persona':
             df = pd.read_csv('../data/Friends_'+personality+'_vad_'+dialog_flow_len+'.tsv', sep='\t')
-#             df = pd.read_csv('../data/Friends_'+personality+'_vad.tsv', sep='\t')
         elif args.data == 'CPED':
             df = pd.read_csv('../data/CPED_'+personality+'_VAD.tsv', sep='\t')
-        else:
-            df = pd.read_csv('../data/PELD_'+personality+'.tsv', sep='\t')
+
         print('Current training classifier for', personality, '...')
-        print(df.shape)
+
+
         test_acc_all_seeds = []
         test_f1_all_seeds = []
         for seed in seeds:
@@ -121,65 +125,41 @@ with open(args.result_name, 'w') as f:
                 We use the pre-trained models to encode the utterance 
                 from the speakers for personality prediction through the classification head.
                 '''
-                model = RobertaForSequenceClassification.from_pretrained('roberta-base', \
-                                num_labels=args.num_class).cuda(args.device)
-        
-            elif args.mode == 'Context' :
-                '''
-                We input the whole dialog into the encoder for personality prediction. 
-                We indicated the utterance from the analyzed speaker and the context 
-                by segment embeddings in the pre-trained models: 1 for utterances and 0 for dialog context. 
-                '''
+                model = RobertaForSequenceClassification.from_pretrained('roberta-base', num_labels=args.num_class).cuda(args.device)
+                # model = TensorParallelPreTrainedModel(model, cuda_list)
 
-                model = RobertaForSequenceClassification.from_pretrained('roberta-base', \
-                                num_labels=args.num_class).cuda(args.device)
 
-            elif args.mode == 'HADE':
-                model     = HADE.from_pretrained('roberta-base', args=args).cuda(args.device)
 
-            model = TensorParallelPreTrainedModel(model, ["cuda:0", "cuda:1", "cuda:2", "cuda:3"])
 
-            print('Training Length is:', len(train_dataloader))
             starttime = datetime.datetime.now()
             training_loss, best_eval_acc = train_model(model, args, train_dataloader, valid_dataloader, train_length)
             endtime = datetime.datetime.now()
             print('Training time for ', personality, ' is: ', (endtime - starttime))
             
             if args.mode == 'Uttr' or args.mode == 'Full_dialog':
-                '''
-                We use the pre-trained models to encode the utterance 
-                from the speakers for personality prediction through the classification head.
-                '''
+
                 try:
                     model = RobertaForSequenceClassification.from_pretrained(args.model_path, \
                                     num_labels=args.num_class).cuda(args.device)
                 except:
-                    print(traceback.print_exc())# load the origin model
-
-            elif args.mode == 'Context':
-                try:
-                    model = RobertaForSequenceClassification.from_pretrained(args.model_path, \
-                                    num_labels=args.num_class).cuda(args.device)
-                except:
-                    print(traceback.print_exc())# load the origin model
-
-            elif args.mode == 'HADE':
-                try:
-                    model     = HADE.from_pretrained(args.model_path, args=args).cuda(args.device)
-                except:
-                    print(traceback.print_exc())# load the origin model
+                    print(traceback.print_exc()) # load the origin model
+                    print('========= =============')
             
 
+
+
             print('Load model from', args.model_path)
-            print('Test Length is:', len(test_dataloader))
+            # model = TensorParallelPreTrainedModel(model, cuda_list)
+
             starttime = datetime.datetime.now()
             args.print_eval = True
             test_acc, test_f1 = eval_model(model, args, test_dataloader)
-            # modify here f1
             endtime = datetime.datetime.now()
             print('Inference time for ', personality, ' is: ', (endtime - starttime))
+
             test_acc_all_seeds.append(test_acc)
             test_f1_all_seeds.append(test_f1)
+
             print('Current Seed is', seed)
             print('Test ACC:', test_acc)
             print('Test F1:', test_f1)

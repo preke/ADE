@@ -2,7 +2,6 @@ import sklearn
 import pandas as pd
 import numpy as np
 
-from transformers import BertTokenizer, BertConfig, BertForSequenceClassification
 from transformers import AdamW, get_linear_schedule_with_warmup
 from sklearn.metrics import f1_score
 from sklearn.metrics import confusion_matrix, classification_report
@@ -62,7 +61,6 @@ def train_model(model, args, train_dataloader, valid_dataloader, train_length):
             batch = tuple(t.cuda(args.device) for t in batch)
             # Unpack the inputs from our dataloader
             if args.mode == 'HADE':
-                
 
                 b_uttr, b_uttr_mask, b_vad_personality, b_emotions, b_dialog_states, b_labels = batch
 
@@ -103,7 +101,7 @@ def train_model(model, args, train_dataloader, valid_dataloader, train_length):
 
             # Validation
             # Put model in evaluation mode to evaluate loss on the validation set
-            if step%1 == 0:
+            if step % 1 == 0:
                 args.print_eval = False
                 eval_acc, eval_f1 = eval_model(model, args, valid_dataloader)
                 if eval_f1 > best_eval_f1:
@@ -180,8 +178,7 @@ def eval_model(model, args, valid_dataloader):
                 
         # Move logits and labels to CPU
         logits      = logits.to('cpu').numpy()
-        
-        # print(logits)
+
         
         label_ids   = b_labels.to('cpu').numpy()
         
