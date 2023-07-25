@@ -66,6 +66,7 @@ training_args = TrainingArguments(
     num_train_epochs = 3,
     learning_rate = 1e-05,
     evaluation_strategy = 'epoch',
+    save_strategy = 'epoch',
     load_best_model_at_end = True,
     seed = 42,
 )
