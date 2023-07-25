@@ -17,7 +17,7 @@ import numpy as np
 # checkpoint = "roberta-large"
 checkpoint = "bert-base-uncased"
 tokenizer = AutoTokenizer.from_pretrained(checkpoint)
-
+SEED = 42
 
 def load_data(tsv_file):
     df = pd.read_csv(tsv_file, sep='\t')
@@ -33,9 +33,9 @@ def load_data(tsv_file):
 
     dataset_dict = load_dataset("json", data_files=data_path, features=features)
 
-    tmp_dict = dataset_dict['train'].train_test_split(test_size=0.2, shuffle=True)
+    tmp_dict = dataset_dict['train'].train_test_split(test_size=0.2, shuffle=True, seed=SEED)
     train_dataset, remaining_dataset = tmp_dict['train'], tmp_dict['test']
-    tmp_dict = remaining_dataset.train_test_split(test_size=0.5, shuffle=True)
+    tmp_dict = remaining_dataset.train_test_split(test_size=0.5, shuffle=True, seed=SEED)
     valid_dataset, test_dataset = tmp_dict['train'], tmp_dict['test']
     dataset_dict = DatasetDict({
         'train': train_dataset,
@@ -69,7 +69,7 @@ training_args = TrainingArguments(
     evaluation_strategy = 'epoch',
     save_strategy = 'epoch',
     load_best_model_at_end = True,
-    seed = 42,
+    seed = SEED,
 )
 
 trainer = Trainer(
