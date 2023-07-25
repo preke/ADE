@@ -65,11 +65,9 @@ training_args = TrainingArguments(
     per_device_eval_batch_size = 8,
     num_train_epochs = 3,
     learning_rate = 1e-05,
-    evaluation_strategy = 'steps',
-    eval_steps = 10,
+    evaluation_strategy = 'epoch',
     load_best_model_at_end = True,
     seed = 42,
-    data_seed = 42,
 )
 
 trainer = Trainer(
