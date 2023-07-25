@@ -69,7 +69,6 @@ training_args = TrainingArguments(
     load_best_model_at_end = True,
     seed = 42,
     data_seed = 42,
-    device='cuda:0',
 )
 
 trainer = Trainer(
