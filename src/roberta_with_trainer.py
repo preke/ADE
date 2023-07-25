@@ -12,7 +12,7 @@ from datasets import load_metric
 import numpy as np
 
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '0,2,3'
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 checkpoint = "roberta-base"
 tokenizer = AutoTokenizer.from_pretrained(checkpoint)
 
@@ -59,8 +59,8 @@ model = AutoModelForSequenceClassification.from_pretrained(checkpoint, num_label
 
 training_args = TrainingArguments(
     'test_trainer',
-    per_device_train_batch_size = 16,
-    per_device_eval_batch_size = 16,
+    per_device_train_batch_size = 8,
+    per_device_eval_batch_size = 8,
     num_train_epochs =  3,
     learning_rate = 5e-05,
 )
