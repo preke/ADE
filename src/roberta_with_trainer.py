@@ -60,7 +60,7 @@ def load_data(tsv_file):
     return dataset_dict
 
 def tokenize_function(example):
-    return tokenizer(example["sent"], truncation=True, max_length=None)
+    return tokenizer(example["sent"], truncation=True, max_length=256)
 
 
 def compute_metrics(eval_pred):
