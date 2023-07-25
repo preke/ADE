@@ -75,7 +75,7 @@ friends_persona_a = '../data/Friends_A.tsv'
 
 dataset_dict = load_data(friends_persona_a)
 tokenized_datasets = dataset_dict.map(tokenize_function, batched=True, remove_columns=['sent'])
-data_collator = DataCollatorWithPadding(tokenizer=tokenizer, padding="longest")
+data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
 
 
 
@@ -102,7 +102,7 @@ elif mode == 'p-tuning':
 
     model = AutoModelForSequenceClassification.from_pretrained(checkpoint, return_dict=True)
 
-    peft_config = PromptEncoderConfig(task_type="SEQ_CLS", num_virtual_tokens=100, encoder_hidden_size=128)
+    peft_config = PromptEncoderConfig(task_type="SEQ_CLS", num_virtual_tokens=20, encoder_hidden_size=128)
     model = get_peft_model(model, peft_config)
     model.print_trainable_parameters()
 
