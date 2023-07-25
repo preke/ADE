@@ -32,7 +32,7 @@ checkpoint = "roberta-base"
 tokenizer = AutoTokenizer.from_pretrained(checkpoint)
 SEED = 42
 
-mode = 'fine-tuning'
+mode = 'p-tuning'
 
 def load_data(tsv_file):
     df = pd.read_csv(tsv_file, sep='\t')
