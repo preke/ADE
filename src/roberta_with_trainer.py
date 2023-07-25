@@ -11,8 +11,8 @@ from transformers import Trainer
 from datasets import load_metric
 import numpy as np
 
-import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+# import os
+# os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 checkpoint = "roberta-base"
 tokenizer = AutoTokenizer.from_pretrained(checkpoint)
