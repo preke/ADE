@@ -11,6 +11,19 @@ from transformers import Trainer
 from datasets import load_metric
 import numpy as np
 
+
+
+from peft import (
+    get_peft_config,
+    get_peft_model,
+    get_peft_model_state_dict,
+    set_peft_model_state_dict,
+    PeftType,
+    PromptEncoderConfig,
+)
+
+
+
 # import os
 # os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
@@ -18,6 +31,8 @@ checkpoint = "roberta-base"
 # checkpoint = "bert-base-uncased"
 tokenizer = AutoTokenizer.from_pretrained(checkpoint)
 SEED = 42
+
+mode = 'fine-tuning'
 
 def load_data(tsv_file):
     df = pd.read_csv(tsv_file, sep='\t')
@@ -48,29 +63,53 @@ def tokenize_function(example):
     return tokenizer(example["sent"], truncation=True)
 
 
+def compute_metrics(eval_pred):
+    predictions, labels = eval_pred
+    predictions = np.argmax(predictions, axis=1)
+    return metric.compute(predictions=predictions, references=labels)
+
+
+
 friends_persona_a = '../data/Friends_A.tsv'
 
 
 dataset_dict = load_data(friends_persona_a)
-tokenized_datasets = dataset_dict.map(tokenize_function, batched=True)
-data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
+tokenized_datasets = dataset_dict.map(tokenize_function, batched=True, remove_columns=['sent'])
+data_collator = DataCollatorWithPadding(tokenizer=tokenizer, padding="longest")
 model = AutoModelForSequenceClassification.from_pretrained(checkpoint, num_labels=2)
 
 
 
+if mode == 'fine-tuning':
+    training_args = TrainingArguments(
+        'test_trainer',
+        overwrite_output_dir = True,
+        per_device_train_batch_size = 8,
+        per_device_eval_batch_size = 8,
+        num_train_epochs = 3,
+        learning_rate = 5e-05,
+        evaluation_strategy = 'epoch',
+        save_strategy = 'epoch',
+        load_best_model_at_end = True,
+        seed = SEED,
+    )
+elif mode == 'p-tuning':
+    peft_config = PromptEncoderConfig(task_type="SEQ_CLS", num_virtual_tokens=20, encoder_hidden_size=128)
+    model = get_peft_model(model, peft_config)
+    model.print_trainable_parameters()
 
-training_args = TrainingArguments(
-    'test_trainer',
-    overwrite_output_dir = True,
-    per_device_train_batch_size = 8,
-    per_device_eval_batch_size = 8,
-    num_train_epochs = 3,
-    learning_rate = 5e-05,
-    evaluation_strategy = 'epoch',
-    save_strategy = 'epoch',
-    load_best_model_at_end = True,
-    seed = SEED,
-)
+    training_args = TrainingArguments(
+        output_dir="roberta-large-peft-p-tuning",
+        learning_rate= 1e-3,
+        per_device_train_batch_size=32,
+        per_device_eval_batch_size=32,
+        num_train_epochs=2,
+        weight_decay=0.01,
+        evaluation_strategy="epoch",
+        save_strategy="epoch",
+        load_best_model_at_end=True,
+    )
+
 
 trainer = Trainer(
     model,
@@ -79,9 +118,11 @@ trainer = Trainer(
     eval_dataset=tokenized_datasets["validation"],
     data_collator=data_collator,
     tokenizer=tokenizer,
+    compute_metrics=compute_metrics,
 )
 
 trainer.train()
+
 
 predictions = trainer.predict(tokenized_datasets['test'])
 preds = np.argmax(predictions.predictions, axis=-1)
