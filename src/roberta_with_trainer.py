@@ -12,7 +12,7 @@ from datasets import load_metric
 import numpy as np
 
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+os.environ['CUDA_VISIBLE_DEVICES'] = '0,2,3'
 checkpoint = "roberta-base"
 tokenizer = AutoTokenizer.from_pretrained(checkpoint)
 
