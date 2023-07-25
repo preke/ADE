@@ -14,8 +14,8 @@ import numpy as np
 # import os
 # os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
-# checkpoint = "roberta-large"
-checkpoint = "bert-base-uncased"
+checkpoint = "roberta-base"
+# checkpoint = "bert-base-uncased"
 tokenizer = AutoTokenizer.from_pretrained(checkpoint)
 SEED = 42
 
