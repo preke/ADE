@@ -13,6 +13,7 @@ import numpy as np
 
 import os
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+
 checkpoint = "roberta-base"
 tokenizer = AutoTokenizer.from_pretrained(checkpoint)
 
@@ -59,12 +60,16 @@ model = AutoModelForSequenceClassification.from_pretrained(checkpoint, num_label
 
 training_args = TrainingArguments(
     'test_trainer',
+    overwrite_output_dir = True,
     per_device_train_batch_size = 8,
     per_device_eval_batch_size = 8,
     num_train_epochs =  3,
     learning_rate = 5e-05,
     evaluation_strategy = 'steps',
     load_best_model_at_end = True,
+    seed = 42,
+    data_seed = 42,
+    device='cuda:0',
 )
 
 trainer = Trainer(
