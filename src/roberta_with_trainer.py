@@ -102,7 +102,7 @@ elif mode == 'p-tuning':
 
     model = AutoModelForSequenceClassification.from_pretrained(checkpoint, return_dict=True)
 
-    peft_config = PromptEncoderConfig(task_type="SEQ_CLS", num_virtual_tokens=20, encoder_hidden_size=128)
+    peft_config = PromptEncoderConfig(task_type="SEQ_CLS", num_virtual_tokens=20, encoder_hidden_size=1)
     model = get_peft_model(model, peft_config)
     model.print_trainable_parameters()
 
