@@ -78,6 +78,7 @@ tokenized_datasets = dataset_dict.map(tokenize_function, batched=True, remove_co
 data_collator = DataCollatorWithPadding(tokenizer=tokenizer, padding="longest")
 model = AutoModelForSequenceClassification.from_pretrained(checkpoint, num_labels=2)
 
+metric = evaluate.load('f1')
 
 
 if mode == 'fine-tuning':
@@ -108,6 +109,7 @@ elif mode == 'p-tuning':
         evaluation_strategy="epoch",
         save_strategy="epoch",
         load_best_model_at_end=True,
+        seed=SEED,
     )
 
 
@@ -126,6 +128,5 @@ trainer.train()
 
 predictions = trainer.predict(tokenized_datasets['test'])
 preds = np.argmax(predictions.predictions, axis=-1)
-metric = load_metric('f1')
 print(preds)
 print(metric.compute(predictions=preds, references=predictions.label_ids))
