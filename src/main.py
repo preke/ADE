@@ -23,7 +23,7 @@ parser = argparse.ArgumentParser(description='')
 args   = parser.parse_args()
 
 
-args.device        = 1
+args.device        = 2
 args.MAX_LEN       = 256
 args.adam_epsilon  = 1e-6
 args.num_class     = 2
