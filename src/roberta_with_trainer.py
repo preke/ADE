@@ -109,8 +109,8 @@ elif mode == 'p-tuning':
     training_args = TrainingArguments(
         output_dir="roberta-large-peft-p-tuning",
         learning_rate= 1e-3,
-        per_device_train_batch_size=32,
-        per_device_eval_batch_size=32,
+        per_device_train_batch_size=8,
+        per_device_eval_batch_size=8,
         num_train_epochs=2,
         weight_decay=0.01,
         evaluation_strategy="epoch",
