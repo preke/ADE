@@ -29,7 +29,7 @@ from peft import (
 
 checkpoint = "roberta-base"
 # checkpoint = "bert-base-uncased"
-tokenizer = AutoTokenizer.from_pretrained(checkpoint)
+tokenizer = AutoTokenizer.from_pretrained(checkpoint, padding_side='right')
 SEED = 42
 
 mode = 'p-tuning'
@@ -76,12 +76,16 @@ friends_persona_a = '../data/Friends_A.tsv'
 dataset_dict = load_data(friends_persona_a)
 tokenized_datasets = dataset_dict.map(tokenize_function, batched=True, remove_columns=['sent'])
 data_collator = DataCollatorWithPadding(tokenizer=tokenizer, padding="longest")
-model = AutoModelForSequenceClassification.from_pretrained(checkpoint, num_labels=2)
+
+
+
 
 metric = evaluate.load('f1')
 
 
 if mode == 'fine-tuning':
+    model = AutoModelForSequenceClassification.from_pretrained(checkpoint, num_labels=2)
+
     training_args = TrainingArguments(
         'test_trainer',
         overwrite_output_dir = True,
@@ -95,6 +99,9 @@ if mode == 'fine-tuning':
         seed = SEED,
     )
 elif mode == 'p-tuning':
+
+    model = AutoModelForSequenceClassification.from_pretrained(checkpoint, return_dict=True)
+
     peft_config = PromptEncoderConfig(task_type="SEQ_CLS", num_virtual_tokens=20, encoder_hidden_size=128)
     model = get_peft_model(model, peft_config)
     model.print_trainable_parameters()
