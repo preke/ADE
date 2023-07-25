@@ -14,7 +14,8 @@ import numpy as np
 # import os
 # os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
-checkpoint = "roberta-large"
+# checkpoint = "roberta-large"
+checkpoint = "bert-base-uncased"
 tokenizer = AutoTokenizer.from_pretrained(checkpoint)
 
 
@@ -64,7 +65,7 @@ training_args = TrainingArguments(
     per_device_train_batch_size = 8,
     per_device_eval_batch_size = 8,
     num_train_epochs = 3,
-    learning_rate = 1e-05,
+    learning_rate = 5e-05,
     evaluation_strategy = 'epoch',
     save_strategy = 'epoch',
     load_best_model_at_end = True,
