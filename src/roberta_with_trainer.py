@@ -60,7 +60,7 @@ def load_data(tsv_file):
     return dataset_dict
 
 def tokenize_function(example):
-    return tokenizer(example["sent"], truncation=True)
+    return tokenizer(example["sent"], truncation=True, max_length=None)
 
 
 def compute_metrics(eval_pred):
@@ -75,7 +75,7 @@ friends_persona_a = '../data/Friends_A.tsv'
 
 dataset_dict = load_data(friends_persona_a)
 tokenized_datasets = dataset_dict.map(tokenize_function, batched=True, remove_columns=['sent'])
-data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
+data_collator = DataCollatorWithPadding(tokenizer=tokenizer, padding="longest")
 
 
 

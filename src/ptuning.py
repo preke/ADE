@@ -1,17 +1,3 @@
-import json
-import pandas as pd
-from datasets import load_dataset, Dataset, DatasetDict, Features, ClassLabel, Value
-
-from transformers import AutoTokenizer
-from transformers import DataCollatorWithPadding
-from transformers import TrainingArguments
-from transformers import AutoModelForSequenceClassification
-from transformers import Trainer
-
-from datasets import load_metric
-import numpy as np
-
-
 from transformers import (
     AutoModelForSequenceClassification,
     AutoTokenizer,
@@ -31,63 +17,85 @@ from datasets import load_dataset
 import evaluate
 import torch
 
-model_name_or_path = "roberta-base"
-
-SEED               = 42
-
-
-
-def load_data(tsv_file):
-    df = pd.read_csv(tsv_file, sep='\t')
-    data_path = '../data/tmp.jsonl'
-    json_data = df[['sent', 'labels']].to_dict(orient="records")
-    with open(data_path, 'w') as outfile:
-        for row in json_data:
-            json.dump(row, outfile)
-            outfile.write('\n')
-
-    class_names = ['negative', 'positive']
-    features = Features({'sent': Value('string'), 'labels': ClassLabel(names=class_names)})
-
-    dataset_dict = load_dataset("json", data_files=data_path, features=features)
-
-    tmp_dict = dataset_dict['train'].train_test_split(test_size=0.2, shuffle=True, seed=SEED)
-    train_dataset, remaining_dataset = tmp_dict['train'], tmp_dict['test']
-    tmp_dict = remaining_dataset.train_test_split(test_size=0.5, shuffle=True, seed=SEED)
-    valid_dataset, test_dataset = tmp_dict['train'], tmp_dict['test']
-    dataset_dict = DatasetDict({
-        'train': train_dataset,
-        'validation': valid_dataset,
-        'test': test_dataset
-    })
-    return dataset_dict
-
-def tokenize_function(example):
-    return tokenizer(example["sent"], truncation=True)
+model_name_or_path = "roberta-large"
+task = "mrpc"
+num_epochs = 20
+lr = 1e-3
+batch_size = 32
 
 
-friends_persona_a = '../data/Friends_A.tsv'
+dataset = load_dataset("glue", task)
 
-dataset_dict = load_data(friends_persona_a)
-tokenized_datasets = dataset_dict.map(tokenize_function, batched=True)
-data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
+metric = evaluate.load("glue", task)
 
-
+import numpy as np
 
 
+def compute_metrics(eval_pred):
+    predictions, labels = eval_pred
+    predictions = np.argmax(predictions, axis=1)
+    return metric.compute(predictions=predictions, references=labels)
 
+
+if any(k in model_name_or_path for k in ("gpt", "opt", "bloom")):
+    padding_side = "left"
+else:
+    padding_side = "right"
+
+tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, padding_side=padding_side)
+if getattr(tokenizer, "pad_token_id") is None:
+    tokenizer.pad_token_id = tokenizer.eos_token_id
+
+
+def tokenize_function(examples):
+    # max_length=None => use the model max length (it's actually the default)
+    outputs = tokenizer(examples["sentence1"], examples["sentence2"], truncation=True, max_length=None)
+    return outputs
+
+
+tokenized_datasets = dataset.map(
+    tokenize_function,
+    batched=True,
+    remove_columns=["idx", "sentence1", "sentence2"],
+)
+
+tokenized_datasets = tokenized_datasets.rename_column("label", "labels")
+
+
+data_collator = DataCollatorWithPadding(tokenizer=tokenizer, padding="longest")
+
+
+
+peft_config = PromptEncoderConfig(task_type="SEQ_CLS", num_virtual_tokens=20, encoder_hidden_size=128)
+
+
+
+model = AutoModelForSequenceClassification.from_pretrained(model_name_or_path, return_dict=True)
+model = get_peft_model(model, peft_config)
+model.print_trainable_parameters()
+
+
+training_args = TrainingArguments(
+    output_dir="your-name/roberta-large-peft-p-tuning",
+    learning_rate=1e-3,
+    per_device_train_batch_size=32,
+    per_device_eval_batch_size=32,
+    num_train_epochs=2,
+    weight_decay=0.01,
+    evaluation_strategy="epoch",
+    save_strategy="epoch",
+    load_best_model_at_end=True,
+)
 
 
 trainer = Trainer(
     model=model,
     args=training_args,
     train_dataset=tokenized_datasets["train"],
-    eval_dataset=tokenized_datasets["validation"],
+    eval_dataset=tokenized_datasets["test"],
     tokenizer=tokenizer,
     data_collator=data_collator,
     compute_metrics=compute_metrics,
 )
 
 trainer.train()
-
-
