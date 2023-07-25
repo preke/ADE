@@ -7,7 +7,7 @@ from transformers import DataCollatorWithPadding
 from transformers import TrainingArguments
 from transformers import AutoModelForSequenceClassification
 from transformers import Trainer
-
+import evaluate
 from datasets import load_metric
 import numpy as np
 
