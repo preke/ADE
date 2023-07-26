@@ -27,7 +27,8 @@ from peft import (
 # import os
 # os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
-checkpoint = "roberta-large"
+# checkpoint = "roberta-large"
+checkpoint = "microsoft/deberta-v3-base"
 # checkpoint = "bert-base-uncased"
 tokenizer = AutoTokenizer.from_pretrained(checkpoint, padding_side='right')
 SEED = 42
@@ -98,11 +99,18 @@ if mode == 'fine-tuning':
         load_best_model_at_end = True,
         seed = SEED,
     )
+
+
 elif mode == 'p-tuning':
 
     model = AutoModelForSequenceClassification.from_pretrained(checkpoint, return_dict=True)
 
-    peft_config = PromptEncoderConfig(task_type="SEQ_CLS", num_virtual_tokens=20, encoder_hidden_size=128)
+    peft_config = PromptEncoderConfig(
+        task_type="SEQ_CLS",
+        num_virtual_tokens=20,
+        encoder_hidden_size=128
+    )
+
     model = get_peft_model(model, peft_config)
     model.print_trainable_parameters()
 
