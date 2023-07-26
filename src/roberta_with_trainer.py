@@ -28,7 +28,7 @@ from peft import (
 # os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 # checkpoint = "roberta-large"
-checkpoint = "microsoft/deberta-v3-base"
+checkpoint = "microsoft/deberta-v3-large"
 # checkpoint = "bert-base-uncased"
 tokenizer = AutoTokenizer.from_pretrained(checkpoint, padding_side='right')
 SEED = 42
