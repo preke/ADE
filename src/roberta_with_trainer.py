@@ -28,6 +28,7 @@ checkpoint = "roberta-large"
 # checkpoint = "bert-base-uncased"
 tokenizer = AutoTokenizer.from_pretrained(checkpoint, padding_side='right')
 SEED = 42
+metric = evaluate.load('f1')
 
 def load_data(tsv_file):
     df = pd.read_csv(tsv_file, sep='\t')
@@ -71,7 +72,7 @@ def training(data, mode):
     tokenized_datasets = dataset_dict.map(tokenize_function, batched=True, remove_columns=['sent'])
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer, padding="longest")
 
-    metric = evaluate.load('f1')
+
 
     if mode == 'fine-tuning':
         model = AutoModelForSequenceClassification.from_pretrained(checkpoint, num_labels=2)
