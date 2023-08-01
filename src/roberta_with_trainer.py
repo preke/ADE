@@ -23,6 +23,10 @@ from peft import (
 
 # import os
 # os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+checkpoint = "roberta-large"
+# checkpoint = "microsoft/deberta-v3-large"
+# checkpoint = "bert-base-uncased"
+tokenizer = AutoTokenizer.from_pretrained(checkpoint, padding_side='right')
 SEED = 42
 
 def load_data(tsv_file):
@@ -61,11 +65,7 @@ def compute_metrics(eval_pred):
 
 
 def training(data, mode):
-    checkpoint = "roberta-large"
-    # checkpoint = "microsoft/deberta-v3-large"
-    # checkpoint = "bert-base-uncased"
-    tokenizer = AutoTokenizer.from_pretrained(checkpoint, padding_side='right')
-    SEED = 42
+
 
     dataset_dict = load_data(data)
     tokenized_datasets = dataset_dict.map(tokenize_function, batched=True, remove_columns=['sent'])
