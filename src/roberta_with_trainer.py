@@ -138,7 +138,7 @@ def training(data, mode):
 if __name__ == '__main__':
     mode = 'fine-tuning'
 
-    personality = ['A', 'C', 'E', 'O', 'N']
+    personality = ['A']#, 'C', 'E', 'O', 'N']
     results = {}
     for p in personality:
         # data = '../data/Friends_'+p+'.tsv'
