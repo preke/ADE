@@ -136,13 +136,14 @@ def training(data, mode):
 
 
 if __name__ == '__main__':
-    mode = 'fine-tuning'
+    # mode = 'fine-tuning'
+    mode = 'p-tuning'
 
     personality = ['A', 'C', 'E', 'O', 'N']
     results = {}
     for p in personality:
-        data = '../data/Friends_'+p+'.tsv'
-        # data = '../data/Friends_'+p+'_with_role.tsv'
+        # data = '../data/Friends_'+p+'.tsv'
+        data = '../data/Friends_'+p+'_with_role.tsv'
 
         preds, labels, f1 = training(data, mode)
         results[p] = {
