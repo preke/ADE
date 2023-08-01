@@ -23,7 +23,7 @@ from peft import (
 
 # import os
 # os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-
+SEED = 42
 
 def load_data(tsv_file):
     df = pd.read_csv(tsv_file, sep='\t')
