@@ -141,8 +141,8 @@ if __name__ == '__main__':
     personality = ['A', 'C', 'E', 'O', 'N']
     results = {}
     for p in personality:
-        # data = '../data/Friends_'+p+'.tsv'
-        data = '../data/Friends_'+p+'_with_role.tsv'
+        data = '../data/Friends_'+p+'.tsv'
+        # data = '../data/Friends_'+p+'_with_role.tsv'
 
         preds, labels, f1 = training(data, mode)
         results[p] = {
