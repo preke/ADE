@@ -33,7 +33,7 @@ checkpoint = "roberta-large"
 tokenizer = AutoTokenizer.from_pretrained(checkpoint, padding_side='right')
 SEED = 42
 
-mode = 'fine-tuning'
+mode = 'p-tuning'
 
 def load_data(tsv_file):
     df = pd.read_csv(tsv_file, sep='\t')
@@ -46,7 +46,6 @@ def load_data(tsv_file):
 
     class_names = ['negative', 'positive']
     features = Features({'sent': Value('string'), 'labels': ClassLabel(names=class_names)})
-
     dataset_dict = load_dataset("json", data_files=data_path, features=features)
 
     tmp_dict = dataset_dict['train'].train_test_split(test_size=0.2, shuffle=True, seed=SEED)
@@ -71,7 +70,8 @@ def compute_metrics(eval_pred):
 
 
 
-friends_persona_a = '../data/Friends_A.tsv'
+# friends_persona_a = '../data/Friends_A.tsv'
+friends_persona_a = '../data/Friends_A_with_role.tsv'
 
 
 dataset_dict = load_data(friends_persona_a)
@@ -115,7 +115,7 @@ elif mode == 'p-tuning':
     model.print_trainable_parameters()
 
     training_args = TrainingArguments(
-        output_dir="roberta-large-peft-p-tuning",
+        output_dir="peft-p-tuning",
         learning_rate= 1e-3,
         per_device_train_batch_size=8,
         per_device_eval_batch_size=8,

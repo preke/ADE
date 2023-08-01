@@ -61,8 +61,6 @@ class Context_Encoder(nn.Module):
         
     def forward(self, emo_embedding, dialog_states, args):
 
-
-    
         emo_embedding = self.position_embedding(emo_embedding) 
         emo_embedding = self.semantic_encoder(emo_embedding, dialog_states)
 
@@ -143,7 +141,7 @@ class HADE(RobertaPreTrainedModel):
         super().__init__(config)
         self.args            = args
         self.num_labels      = args.num_class
-        self.config          = config
+        self.config           = config
         self.roberta         = RobertaModel(config, add_pooling_layer=True)
         
         self.uttr_cls = nn.Linear(config.hidden_size, 2)
