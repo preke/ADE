@@ -33,7 +33,7 @@ checkpoint = "roberta-large"
 tokenizer = AutoTokenizer.from_pretrained(checkpoint, padding_side='right')
 SEED = 42
 
-mode = 'p-tuning'
+mode = 'fine-tuning'
 
 def load_data(tsv_file):
     df = pd.read_csv(tsv_file, sep='\t')
