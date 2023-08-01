@@ -146,7 +146,7 @@ if __name__ == '__main__':
         preds, labels, f1 = training(data, mode)
         results[p] = {
             'preds': preds,
-            'labels': labels
+            'labels': labels,
             'f1': f1
         }
     print(results)
