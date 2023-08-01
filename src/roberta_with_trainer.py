@@ -83,7 +83,7 @@ def training(data, mode):
             per_device_train_batch_size=8,
             per_device_eval_batch_size=8,
             num_train_epochs=3,
-            learning_rate=1e-05,
+            learning_rate=1e-04,
             evaluation_strategy='epoch',
             save_strategy='epoch',
             load_best_model_at_end=True,
@@ -142,7 +142,7 @@ if __name__ == '__main__':
     results = {}
     for p in personality:
         # data = '../data/Friends_A.tsv'
-        data = '../data/Friends_A_with_role.tsv'
+        data = '../data/Friends_'+p+'_with_role.tsv'
 
         preds, labels, f1 = training(data, mode)
         results[p] = {
@@ -150,7 +150,9 @@ if __name__ == '__main__':
             'labels': labels,
             'f1': f1
         }
-    print(results)
+    for k,v in results.iteritems():
+        print(k, v)
+        print('------\n')
 
 
 
