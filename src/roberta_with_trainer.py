@@ -11,8 +11,6 @@ import evaluate
 from datasets import load_metric
 import numpy as np
 
-
-
 from peft import (
     get_peft_config,
     get_peft_model,
@@ -23,17 +21,9 @@ from peft import (
 )
 
 
-
 # import os
 # os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
-checkpoint = "roberta-large"
-# checkpoint = "microsoft/deberta-v3-large"
-# checkpoint = "bert-base-uncased"
-tokenizer = AutoTokenizer.from_pretrained(checkpoint, padding_side='right')
-SEED = 42
-
-mode = 'fine-tuning'
 
 def load_data(tsv_file):
     df = pd.read_csv(tsv_file, sep='\t')
@@ -59,6 +49,7 @@ def load_data(tsv_file):
     })
     return dataset_dict
 
+
 def tokenize_function(example):
     return tokenizer(example["sent"], truncation=True, max_length=256)
 
@@ -69,79 +60,101 @@ def compute_metrics(eval_pred):
     return metric.compute(predictions=predictions, references=labels)
 
 
+def training(data, mode):
+    checkpoint = "roberta-large"
+    # checkpoint = "microsoft/deberta-v3-large"
+    # checkpoint = "bert-base-uncased"
+    tokenizer = AutoTokenizer.from_pretrained(checkpoint, padding_side='right')
+    SEED = 42
 
-# friends_persona_a = '../data/Friends_A.tsv'
-friends_persona_a = '../data/Friends_A_with_role.tsv'
+    dataset_dict = load_data(data)
+    tokenized_datasets = dataset_dict.map(tokenize_function, batched=True, remove_columns=['sent'])
+    data_collator = DataCollatorWithPadding(tokenizer=tokenizer, padding="longest")
+
+    metric = evaluate.load('f1')
+
+    if mode == 'fine-tuning':
+        model = AutoModelForSequenceClassification.from_pretrained(checkpoint, num_labels=2)
+
+        training_args = TrainingArguments(
+            'test_trainer',
+            overwrite_output_dir=True,
+            per_device_train_batch_size=8,
+            per_device_eval_batch_size=8,
+            num_train_epochs=3,
+            learning_rate=1e-05,
+            evaluation_strategy='epoch',
+            save_strategy='epoch',
+            load_best_model_at_end=True,
+            seed=SEED,
+        )
 
 
-dataset_dict = load_data(friends_persona_a)
-tokenized_datasets = dataset_dict.map(tokenize_function, batched=True, remove_columns=['sent'])
-data_collator = DataCollatorWithPadding(tokenizer=tokenizer, padding="longest")
+    elif mode == 'p-tuning':
 
+        model = AutoModelForSequenceClassification.from_pretrained(checkpoint, return_dict=True)
 
+        peft_config = PromptEncoderConfig(
+            task_type="SEQ_CLS",
+            num_virtual_tokens=20,
+            encoder_hidden_size=128
+        )
 
+        model = get_peft_model(model, peft_config)
+        model.print_trainable_parameters()
 
-metric = evaluate.load('f1')
+        training_args = TrainingArguments(
+            output_dir="peft-p-tuning",
+            learning_rate=1e-3,
+            per_device_train_batch_size=8,
+            per_device_eval_batch_size=8,
+            num_train_epochs=2,
+            weight_decay=0.01,
+            evaluation_strategy="epoch",
+            save_strategy="epoch",
+            load_best_model_at_end=True,
+            seed=SEED,
+        )
 
-
-if mode == 'fine-tuning':
-    model = AutoModelForSequenceClassification.from_pretrained(checkpoint, num_labels=2)
-
-    training_args = TrainingArguments(
-        'test_trainer',
-        overwrite_output_dir = True,
-        per_device_train_batch_size = 8,
-        per_device_eval_batch_size = 8,
-        num_train_epochs = 3,
-        learning_rate = 5e-05,
-        evaluation_strategy = 'epoch',
-        save_strategy = 'epoch',
-        load_best_model_at_end = True,
-        seed = SEED,
+    trainer = Trainer(
+        model,
+        training_args,
+        train_dataset=tokenized_datasets["train"],
+        eval_dataset=tokenized_datasets["validation"],
+        data_collator=data_collator,
+        tokenizer=tokenizer,
+        compute_metrics=compute_metrics,
     )
 
+    trainer.train()
 
-elif mode == 'p-tuning':
+    predictions = trainer.predict(tokenized_datasets['test'])
+    preds = np.argmax(predictions.predictions, axis=-1)
 
-    model = AutoModelForSequenceClassification.from_pretrained(checkpoint, return_dict=True)
-
-    peft_config = PromptEncoderConfig(
-        task_type="SEQ_CLS",
-        num_virtual_tokens=20,
-        encoder_hidden_size=128
-    )
-
-    model = get_peft_model(model, peft_config)
-    model.print_trainable_parameters()
-
-    training_args = TrainingArguments(
-        output_dir="peft-p-tuning",
-        learning_rate= 1e-3,
-        per_device_train_batch_size=8,
-        per_device_eval_batch_size=8,
-        num_train_epochs=2,
-        weight_decay=0.01,
-        evaluation_strategy="epoch",
-        save_strategy="epoch",
-        load_best_model_at_end=True,
-        seed=SEED,
-    )
+    return preds, predictions.label_ids, metric.compute(predictions=preds, references=predictions.label_ids)
 
 
-trainer = Trainer(
-    model,
-    training_args,
-    train_dataset=tokenized_datasets["train"],
-    eval_dataset=tokenized_datasets["validation"],
-    data_collator=data_collator,
-    tokenizer=tokenizer,
-    compute_metrics=compute_metrics,
-)
+if __name__ == '__main__':
+    mode = 'fine-tuning'
 
-trainer.train()
+    personality = ['A', 'C', 'E', 'O', 'N']
+    results = {}
+    for p in personality:
+        # data = '../data/Friends_A.tsv'
+        data = '../data/Friends_A_with_role.tsv'
+
+        preds, labels, f1 = training(data, mode)
+        results[p] = {
+            'preds': preds,
+            'labels': labels
+            'f1': f1
+        }
+    print(results)
 
 
-predictions = trainer.predict(tokenized_datasets['test'])
-preds = np.argmax(predictions.predictions, axis=-1)
-print(preds)
-print(metric.compute(predictions=preds, references=predictions.label_ids))
+
+
+
+
+
+
