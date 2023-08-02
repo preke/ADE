@@ -20,27 +20,26 @@ from peft import (
     PromptEncoderConfig,
 )
 
-
-# import os
-# os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 checkpoint = "roberta-large"
-# checkpoint = "microsoft/deberta-v3-large"
-# checkpoint = "bert-base-uncased"
 tokenizer = AutoTokenizer.from_pretrained(checkpoint, padding_side='right')
 SEED = 42
 metric = evaluate.load('f1')
 
+
 def load_data(tsv_file):
     df = pd.read_csv(tsv_file, sep='\t')
     data_path = '../data/tmp.jsonl'
-    json_data = df[['sent', 'labels']].to_dict(orient="records")
+    json_data = df[['sentence1', 'sentence2', 'labels']].to_dict(orient="records")
+
     with open(data_path, 'w') as outfile:
         for row in json_data:
             json.dump(row, outfile)
             outfile.write('\n')
 
     class_names = ['negative', 'positive']
-    features = Features({'sent': Value('string'), 'labels': ClassLabel(names=class_names)})
+    features = Features(
+        {'sentence1': Value('string'), 'sentence2': Value('string'), 'labels': ClassLabel(names=class_names)})
+
     dataset_dict = load_dataset("json", data_files=data_path, features=features)
 
     tmp_dict = dataset_dict['train'].train_test_split(test_size=0.2, shuffle=True, seed=SEED)
@@ -58,7 +57,8 @@ def load_data(tsv_file):
 def tokenize_function(example):
     if getattr(tokenizer, "pad_token_id") is None:
         tokenizer.pad_token_id = tokenizer.eos_token_id
-    return tokenizer(example["sent"], truncation=True, max_length=256)
+    outputs = tokenizer(example["sentence1"], example["sentence2"], truncation=True, max_length=None)
+    return outputs
 
 
 def compute_metrics(eval_pred):
@@ -68,13 +68,9 @@ def compute_metrics(eval_pred):
 
 
 def training(data, mode):
-
-
     dataset_dict = load_data(data)
     tokenized_datasets = dataset_dict.map(tokenize_function, batched=True, remove_columns=['sent'])
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer, padding="longest")
-
-
 
     if mode == 'fine-tuning':
         model = AutoModelForSequenceClassification.from_pretrained(checkpoint, num_labels=2)
@@ -146,7 +142,7 @@ if __name__ == '__main__':
     results = {}
     for p in personality:
         # data = '../data/Friends_'+p+'.tsv'
-        data = '../data/Friends_'+p+'_with_role.tsv'
+        data = '../data/Friends_' + p + '_with_role.tsv'
 
         preds, labels, f1 = training(data, mode)
         results[p] = {
