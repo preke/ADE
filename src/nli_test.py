@@ -134,8 +134,8 @@ def training(data, mode):
 
 
 if __name__ == '__main__':
-    mode = 'fine-tuning'
-    # mode = 'p-tuning'
+    # mode = 'fine-tuning'
+    mode = 'p-tuning'
 
     # personality = ['A', 'C', 'E', 'O', 'N']
     personality = ['A']
