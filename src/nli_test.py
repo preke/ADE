@@ -69,7 +69,7 @@ def compute_metrics(eval_pred):
 
 def training(data, mode):
     dataset_dict = load_data(data)
-    tokenized_datasets = dataset_dict.map(tokenize_function, batched=True, remove_columns=['sent'])
+    tokenized_datasets = dataset_dict.map(tokenize_function, batched=True, remove_columns=["sentence1", "sentence2"])
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer, padding="longest")
 
     if mode == 'fine-tuning':
