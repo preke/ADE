@@ -6,7 +6,7 @@ from transformers import AutoTokenizer
 from transformers import DataCollatorWithPadding
 from transformers import TrainingArguments
 from transformers import AutoModelForSequenceClassification
-from transformers import Trainer, TrainingCallback
+from transformers import Trainer, TrainerCallback
 import evaluate
 from datasets import load_metric
 import numpy as np
@@ -27,7 +27,7 @@ SEED = 42
 metric = evaluate.load('f1')
 
 
-class CustomTrainingCallback(TrainingCallback):
+class CustomTrainingCallback(TrainerCallback):
     def on_step_end(self, args, state, control, **kwargs):
         print(f"Training loss: {state.loss}")
 
