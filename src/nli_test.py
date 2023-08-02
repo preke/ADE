@@ -107,7 +107,7 @@ def training(data, mode):
             learning_rate=1e-3,
             per_device_train_batch_size=8,
             per_device_eval_batch_size=8,
-            num_train_epochs=2,
+            num_train_epochs=10,
             weight_decay=0.01,
             evaluation_strategy="epoch",
             save_strategy="epoch",
