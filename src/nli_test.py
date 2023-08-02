@@ -57,7 +57,7 @@ def load_data(tsv_file):
 def tokenize_function(example):
     if getattr(tokenizer, "pad_token_id") is None:
         tokenizer.pad_token_id = tokenizer.eos_token_id
-    outputs = tokenizer(example["sentence1"], example["sentence2"], truncation=True, max_length=None)
+    outputs = tokenizer(example["sentence1"], example["sentence2"], truncation=True, max_length=256)
     return outputs
 
 
