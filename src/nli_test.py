@@ -96,7 +96,7 @@ def training(data, mode):
 
         peft_config = PromptEncoderConfig(
             task_type="SEQ_CLS",
-            num_virtual_tokens=10,
+            num_virtual_tokens=20,
             encoder_hidden_size=256
         )
 
@@ -105,7 +105,7 @@ def training(data, mode):
 
         training_args = TrainingArguments(
             output_dir="peft-p-tuning",
-            learning_rate=1e-3,
+            learning_rate=5e-4,
             per_device_train_batch_size=8,
             per_device_eval_batch_size=8,
             num_train_epochs=10,
