@@ -137,8 +137,8 @@ if __name__ == '__main__':
     # mode = 'fine-tuning'
     mode = 'p-tuning'
 
-    # personality = ['A', 'C', 'E', 'O', 'N']
-    personality = ['A']
+    personality = ['A', 'C', 'E', 'O', 'N']
+    # personality = ['A']
     results = {}
     for p in personality:
         # data = '../data/Friends_'+p+'.tsv'
