@@ -10,6 +10,7 @@ from transformers import Trainer
 import evaluate
 from datasets import load_metric
 import numpy as np
+import time
 
 from peft import (
     get_peft_config,
@@ -95,7 +96,7 @@ def training(data, mode):
 
         peft_config = PromptEncoderConfig(
             task_type="SEQ_CLS",
-            num_virtual_tokens=20,
+            num_virtual_tokens=10,
             encoder_hidden_size=256
         )
 
@@ -104,7 +105,7 @@ def training(data, mode):
 
         training_args = TrainingArguments(
             output_dir="peft-p-tuning",
-            learning_rate=1e-3,
+            learning_rate=1e-4,
             per_device_train_batch_size=8,
             per_device_eval_batch_size=8,
             num_train_epochs=10,
@@ -135,10 +136,11 @@ def training(data, mode):
 
 if __name__ == '__main__':
     # mode = 'fine-tuning'
-    mode = 'p-tuning'
 
-    personality = ['A', 'C', 'E', 'O', 'N']
-    # personality = ['A']
+    start_time = time.time()
+    mode = 'p-tuning'
+    # personality = ['A', 'C', 'E', 'O', 'N']
+    personality = ['A']
     results = {}
     for p in personality:
         # data = '../data/Friends_'+p+'.tsv'
@@ -150,13 +152,15 @@ if __name__ == '__main__':
             'labels': labels,
             'f1': f1
         }
+    end_time = time.time()
+
     for k, v in results.items():
         print('Personality', k, ':')
         for k_, v_ in v.items():
             print(k_, v_)
         print('------\n')
 
-
+    print('Processing time', end_time-start_time, 's.')
 
 
 
