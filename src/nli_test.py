@@ -6,7 +6,7 @@ from transformers import AutoTokenizer
 from transformers import DataCollatorWithPadding
 from transformers import TrainingArguments
 from transformers import AutoModelForSequenceClassification
-from transformers import Trainer
+from transformers import Trainer, TrainingCallback
 import evaluate
 from datasets import load_metric
 import numpy as np
