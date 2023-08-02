@@ -57,7 +57,7 @@ def load_data(tsv_file):
 def tokenize_function(example):
     if getattr(tokenizer, "pad_token_id") is None:
         tokenizer.pad_token_id = tokenizer.eos_token_id
-    outputs = tokenizer(example["sentence1"], example["sentence2"], truncation=True, max_length=256)
+    outputs = tokenizer(example["sentence1"], example["sentence2"], truncation=True, max_length=512)
     return outputs
 
 
@@ -104,10 +104,10 @@ def training(data, mode):
 
         training_args = TrainingArguments(
             output_dir="peft-p-tuning",
-            learning_rate=1e-4,
+            learning_rate=1e-3,
             per_device_train_batch_size=8,
             per_device_eval_batch_size=8,
-            num_train_epochs=3,
+            num_train_epochs=2,
             weight_decay=0.01,
             evaluation_strategy="epoch",
             save_strategy="epoch",
