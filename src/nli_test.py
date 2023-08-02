@@ -96,7 +96,7 @@ def training(data, mode):
         peft_config = PromptEncoderConfig(
             task_type="SEQ_CLS",
             num_virtual_tokens=20,
-            encoder_hidden_size=128
+            encoder_hidden_size=256
         )
 
         model = get_peft_model(model, peft_config)
