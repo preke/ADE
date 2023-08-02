@@ -82,8 +82,8 @@ def training(data, mode):
             overwrite_output_dir=True,
             per_device_train_batch_size=8,
             per_device_eval_batch_size=8,
-            num_train_epochs=10,
-            learning_rate=2e-04,
+            num_train_epochs=3,
+            learning_rate=5e-05,
             evaluation_strategy='epoch',
             save_strategy='epoch',
             load_best_model_at_end=True,
@@ -136,8 +136,8 @@ def training(data, mode):
 
 
 if __name__ == '__main__':
-    # mode = 'fine-tuning'
-    mode = 'p-tuning'
+    mode = 'fine-tuning'
+    # mode = 'p-tuning'
 
     personality = ['A', 'C', 'E', 'O', 'N']
     results = {}
