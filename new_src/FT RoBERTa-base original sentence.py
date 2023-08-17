@@ -1,3 +1,7 @@
+import os
+
+os.environ["CUDA_VISIBLE_DEVICES"] = '2,3'
+
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -29,28 +33,20 @@ checkpoint = "roberta-base"
 
 tokenizer = AutoTokenizer.from_pretrained(checkpoint, padding_side='right')
 SEED = 42
-metric = evaluate.load('f1')
-
-
-# class CustomTrainingCallback(TrainerCallback):
-#     def on_step_end(self, args, state, control, **kwargs):
-#         print(f"Training loss: {state.loss}")
+metric = evaluate.load('accuracy')
 
 
 def load_data(tsv_file):
     df = pd.read_csv(tsv_file, sep='\t')
     data_path = '../data/tmp.jsonl'
-    json_data = df[['sentence1', 'sentence2', 'labels']].to_dict(orient="records")
-
+    json_data = df[['sent', 'labels']].to_dict(orient="records")
     with open(data_path, 'w') as outfile:
         for row in json_data:
             json.dump(row, outfile)
             outfile.write('\n')
 
     class_names = ['negative', 'positive']
-    features = Features(
-        {'sentence1': Value('string'), 'sentence2': Value('string'), 'labels': ClassLabel(names=class_names)})
-
+    features = Features({'sent': Value('string'), 'labels': ClassLabel(names=class_names)})
     dataset_dict = load_dataset("json", data_files=data_path, features=features)
 
     tmp_dict = dataset_dict['train'].train_test_split(test_size=0.2, shuffle=True, seed=SEED)
@@ -68,8 +64,7 @@ def load_data(tsv_file):
 def tokenize_function(example):
     if getattr(tokenizer, "pad_token_id") is None:
         tokenizer.pad_token_id = tokenizer.eos_token_id
-    outputs = tokenizer(example["sentence1"], example["sentence2"], truncation=True, max_length=256)
-    return outputs
+    return tokenizer(example["sent"], truncation=True, max_length=450)
 
 
 def compute_metrics(eval_pred):
@@ -80,7 +75,7 @@ def compute_metrics(eval_pred):
 
 def training(data, mode):
     dataset_dict = load_data(data)
-    tokenized_datasets = dataset_dict.map(tokenize_function, batched=True, remove_columns=["sentence1", "sentence2"])
+    tokenized_datasets = dataset_dict.map(tokenize_function, batched=True, remove_columns=["sent"])
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer, padding="longest")
 
     if mode == 'fine-tuning':
@@ -89,13 +84,16 @@ def training(data, mode):
         training_args = TrainingArguments(
             'test_trainer',
             overwrite_output_dir=True,
-            per_device_train_batch_size=8,
-            per_device_eval_batch_size=8,
-            num_train_epochs=10,
-            learning_rate=5e-05,
+            per_device_train_batch_size=32,
+            per_device_eval_batch_size=32,
+
+            save_strategy='epoch',
+
+            num_train_epochs=3,
+            learning_rate=2e-05,
             logging_strategy="epoch",
             evaluation_strategy='epoch',
-            save_strategy='epoch',
+
             load_best_model_at_end=True,
             seed=SEED,
         )
@@ -108,7 +106,7 @@ def training(data, mode):
         peft_config = PromptEncoderConfig(
             task_type="SEQ_CLS",
             num_virtual_tokens=20,
-            encoder_hidden_size=256
+            encoder_hidden_size=128
         )
 
         model = get_peft_model(model, peft_config)
@@ -116,15 +114,15 @@ def training(data, mode):
 
         training_args = TrainingArguments(
             output_dir="peft-p-tuning",
-            learning_rate=1e-4,
-            per_device_train_batch_size=8,
-            per_device_eval_batch_size=8,
-            num_train_epochs=10,
+            learning_rate=1e-3,
+            per_device_train_batch_size=32,
+            per_device_eval_batch_size=32,
+            num_train_epochs=3,
             weight_decay=0.01,
             logging_strategy="epoch",
             evaluation_strategy="epoch",
             save_strategy="epoch",
-            load_best_model_at_end=True,
+            #             load_best_model_at_end=True,
             seed=SEED,
         )
 
@@ -148,29 +146,24 @@ def training(data, mode):
 
 
 if __name__ == '__main__':
-    #     mode = 'fine-tuning'
-    mode = 'p-tuning'
-    start_time = time.time()
+    for flow_len in [0.25, 0.5, 0.75, 1]:  # 0.25,
+        for mode in ['fine-tuning']:  # , 'p-tuning' 'fine-tuning'
+            start_time = time.time()
+            personality = ['A', 'C', 'E', 'O', 'N']
+            results = {}
+            for p in personality:
+                data = '../new_data/CPED_' + p + '_with_role_' + str(flow_len) + '.tsv'
 
-    # personality = ['A', 'C', 'E', 'O', 'N']
-    personality = ['A']
-    results = {}
-    for p in personality:
-        # data = '../data/Friends_'+p+'.tsv'
-        data = '../data/Friends_' + p + '_with_role.tsv'
+                preds, labels, acc = training(data, mode)
+                results[p] = {
+                    'preds': list(preds),
+                    'labels': list(labels),
+                    'acc': acc
+                }
+            end_time = time.time()
 
-        preds, labels, f1 = training(data, mode)
-        results[p] = {
-            'preds': preds,
-            'labels': labels,
-            'f1': f1
-        }
-    end_time = time.time()
+            json_str = json.dumps(results, default=str)
+            with open('results/CPED_origin_sent_' + str(flow_len) + '_' + mode + '_3_epoches.json', 'w') as json_file:
+                json_file.write(json_str)
 
-    for k, v in results.items():
-        print('Personality', k, ':')
-        for k_, v_ in v.items():
-            print(k_, v_)
-        print('------\n')
-
-    print('Processing time', end_time - start_time, 's.')
+            print('Processing time', end_time - start_time, 's.')
