@@ -1,6 +1,6 @@
 import os
 
-os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+os.environ["CUDA_VISIBLE_DEVICES"] = '3'
 
 from openprompt.data_utils import InputExample
 
@@ -30,6 +30,8 @@ import torch
 
 def load_data(tsv_file, input_sent):
     df = pd.read_csv(tsv_file, sep='\t')
+    if input_sent == 'affective_sent':
+        df[input_sent] = df['origin_sent'] + ' <s> ' + df['affective_prompt']
     data_path = '../data/tmp.jsonl'
     json_data = df[[input_sent, 'personality_description', 'labels']].to_dict(orient="records")
     with open(data_path, 'w') as outfile:
@@ -72,7 +74,7 @@ def evaluation(eval_dataloader, prompt_model):
 if __name__ == '__main__':
 
     SEED = 42
-    input_sent = 'affective_prompt'
+    input_sent = 'origin_sent' # origin_sent affective_sent
     template_text = '{"placeholder":"text_a"} Question: {"placeholder":"text_b"}? Is it correct? {"mask"}.'
     model_name = "t5-base"
     max_seq_length = 128
@@ -83,7 +85,7 @@ if __name__ == '__main__':
 
     result_file = open(result_name, 'w')
 
-    dialog_lens = [0.25, 0.5, 0.75, 1]
+    dialog_lens = [1] # 0.25, 0.5, 0.75,
     personality_list = ['A', 'C', 'E', 'O', 'N']
     for dialog_len in dialog_lens:
         result_file.write('Dialog length is ' + str(dialog_len) + '\n')
